@@ -1,0 +1,33 @@
+<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>進撃ゲームコミュニティ</title>
+<style>
+body{font-family:system-ui;background:#0b1016;color:#f5f7fa;max-width:900px;margin:auto;padding:16px}button,input,textarea{font:inherit;padding:10px;border-radius:9px;border:1px solid #34414f;background:#141c25;color:#fff}button{cursor:pointer;background:#dcb04e;color:#111;font-weight:700}.box{background:#141c25;border:1px solid #293744;border-radius:15px;padding:15px;margin:12px 0}.row{display:flex;gap:8px;flex-wrap:wrap}.hidden{display:none}.muted{color:#9ca9b7}.post{border-top:1px solid #2a3744;padding:12px 0}</style>
+<h1>⚔️ 進撃ゲームコミュニティ</h1>
+<div id="auth" class="box"><h2>ログイン / 登録</h2><input id="u" placeholder="ユーザー名"><input id="p" type="password" placeholder="パスワード（6文字以上）"><div class="row"><button onclick="login()">ログイン</button><button onclick="register()">新規登録</button></div><p id="err" class="muted"></p></div>
+<div id="app" class="hidden">
+<div class="box"><div class="row"><button onclick="loadPosts()">掲示板</button><button onclick="loadMembers()">メンバー</button><button onclick="loadRooms()">部屋</button><button onclick="loadVideos()">動画</button><button onclick="logout()">ログアウト</button></div></div>
+<div id="view"></div>
+</div>
+<script src="/socket.io/socket.io.js"></script><script>
+let token=localStorage.token, socket;
+const api=async(path,opt={})=>{opt.headers={...(opt.headers||{}),Authorization:"Bearer "+token};if(opt.body&&typeof opt.body!=="string"){opt.headers["Content-Type"]="application/json";opt.body=JSON.stringify(opt.body)}let r=await fetch(path,opt);let j=await r.json();if(!r.ok)throw Error(j.error||"エラー");return j};
+function show(){document.getElementById("auth").classList.toggle("hidden",!!token);document.getElementById("app").classList.toggle("hidden",!token);if(token){socket=io({auth:{token}});socket.on("chat:message",m=>{if(document.getElementById("chat"))addChat(m)});loadPosts()}}
+async function login(){try{let j=await fetch("/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:u.value,password:p.value})}).then(r=>r.json());if(!j.token)throw Error(j.error);token=j.token;localStorage.token=token;show()}catch(e){err.textContent=e.message}}
+async function register(){try{let j=await fetch("/api/register",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({username:u.value,password:p.value})}).then(r=>r.json());if(!j.token)throw Error(j.error);token=j.token;localStorage.token=token;show()}catch(e){err.textContent=e.message}}
+function logout(){localStorage.removeItem("token");token=null;if(socket)socket.disconnect();show()}
+async function loadPosts(){let a=await api("/api/posts");view.innerHTML=`<div class=box><h2>💬 掲示板</h2><input id=pt placeholder="タイトル"><textarea id=pb placeholder="内容"></textarea><button onclick=addPost()>投稿</button></div><div class=box>${a.map(x=>`<div class=post><b>${esc(x.title)}</b><div class=muted>${esc(x.username)} ・ ${esc(x.tag)}</div><p>${esc(x.body)}</p><button onclick="like(${x.id})">❤️ ${x.likes}</button><button onclick="comments(${x.id})">返信</button></div>`).join("")}</div><div class=box><h2>💬 リアルタイムチャット</h2><div id=chat></div><input id=ci placeholder="メッセージ"><button onclick=sendChat()>送信</button></div>`;let ms=await api("/api/messages");ms.forEach(addChat)}
+function addChat(m){let c=document.getElementById("chat");if(!c)return;c.insertAdjacentHTML("beforeend",`<div class=post><b>${esc(m.username)}</b>: ${esc(m.body)}</div>`);c.scrollTop=c.scrollHeight}
+function sendChat(){if(ci.value.trim())socket.emit("chat:send",ci.value.trim());ci.value=""}
+async function addPost(){await api("/api/posts",{method:"POST",body:{title:pt.value,body:pb.value,tag:"雑談"}});pt.value=pb.value="";loadPosts()}
+async function like(id){await api("/api/posts/"+id+"/like",{method:"POST"});loadPosts()}
+async function comments(id){let a=await api("/api/posts/"+id+"/comments");let x=prompt("返信内容");if(x)await api("/api/posts/"+id+"/comments",{method:"POST",body:{body:x}});alert(a.length+"件の既存返信");loadPosts()}
+async function loadMembers(){let a=await api("/api/members");view.innerHTML=`<div class=box><h2>👥 メンバー</h2>${a.map(x=>`<div class=post>${esc(x.icon)} <b>${esc(x.username)}</b> <button onclick="friend(${x.id})">フレンド申請</button><button onclick="block(${x.id})">ブロック</button></div>`).join("")}</div>`}
+async function friend(id){await api("/api/friends/"+id,{method:"POST"});alert("申請しました")}
+async function block(id){await api("/api/block/"+id,{method:"POST"});alert("ブロックしました")}
+async function loadRooms(){let a=await api("/api/rooms");view.innerHTML=`<div class=box><h2>🏠 通話ルーム</h2><input id=rn placeholder="部屋名"><button onclick=addRoom()>作成</button></div><div class=box>${a.map(x=>`<div class=post>🏠 <b>${esc(x.name)}</b> / ${esc(x.owner_name)} / 最大${x.max_users}人 <button onclick="joinRoom(${x.id})">参加</button></div>`).join("")}</div>`}
+async function addRoom(){await api("/api/rooms",{method:"POST",body:{name:rn.value,maxUsers:4}});loadRooms()}
+function joinRoom(id){socket.emit("room:join",id);alert("ルーム参加。実際の音声通話はWebRTCの接続設定が必要です。")}
+async function loadVideos(){let a=await api("/api/videos");view.innerHTML=`<div class=box><h2>🎥 動画</h2><form id=vf><input name=title placeholder="タイトル" required><input name=url placeholder="動画URL"><input name=video type=file accept="video/*"><button>アップロード</button></form></div><div class=box>${a.map(x=>`<div class=post>🎬 <b>${esc(x.title)}</b> / ${esc(x.username)} ${x.url?`<a href="${esc(x.url)}" target=_blank>見る</a>`:""}</div>`).join("")}</div>`;vf.onsubmit=uploadVideo}
+async function uploadVideo(e){e.preventDefault();let f=new FormData(vf);let r=await fetch("/api/videos",{method:"POST",headers:{Authorization:"Bearer "+token},body:f});if(!r.ok)alert("アップロード失敗");loadVideos()}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+show();
+</script></html>
