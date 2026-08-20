@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>進撃コミュニティ</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:#0b1017;
+  color:#eef3f7
+}
+
+:root{
+  --panel:#141b24;
+  --panel2:#1b2531;
+  --line:#293646;
+  --muted:#9eabb8;
+  --accent:#d7a84b
+}
+
+button{font:inherit}
+
+header{
+  position:sticky;
+  top:0;
+  z-index:10;
+  background:rgba(11,16,23,.94);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line)
+}
+
+.nav{
+  max-width:1100px;
+  margin:auto;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:14px 18px
+}
+
+.logo{
+  font-weight:900;
+  letter-spacing:.04em;
+  white-space:nowrap
+}
+
+.logo span{color:var(--accent)}
+
+.navlinks{
+  display:flex;
+  gap:6px;
+  overflow:auto
+}
+
+.navlinks button{
+  background:transparent;
+  color:var(--muted);
+  border:0;
+  padding:9px 12px;
+  border-radius:9px;
+  cursor:pointer;
+  white-space:nowrap
+}
+
+.navlinks button.active,
+.navlinks button:hover{
+  background:var(--panel2);
+  color:#fff
+}
+
+.user{
+  margin-left:auto;
+  border:1px solid var(--line);
+  background:var(--panel);
+  color:#fff;
+  border-radius:999px;
+  padding:8px 12px
+}
+
+main{
+  max-width:1100px;
+  margin:auto;
+  padding:22px 18px 50px
+}
+
+.hero{
+  border:1px solid var(--line);
+  border-radius:22px;
+  padding:30px;
+  background:linear-gradient(135deg,#18222d,#111820);
+  position:relative;
+  overflow:hidden
+}
+
+.eyebrow{
+  color:var(--accent);
+  font-weight:800
+}
+
+.hero h1{
+  font-size:clamp(28px,5vw,52px);
+  line-height:1.05;
+  margin:10px 0
+}
+
+.hero p{
+  color:#b6c1cb;
+  max-width:650px
+}
+
+.actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap
+}
+
+.primary,
+.secondary{
+  border:0;
+  border-radius:11px;
+  padding:12px 16px;
+  cursor:pointer;
+  font-weight:800
+}
+
+.primary{
+  background:var(--accent);
+  color:#10151a
+}
+
+.secondary{
+  background:var(--panel2);
+  color:#fff;
+  border:1px solid var(--line)
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:16px;
+  margin-top:18px
+}
+
+.card{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:16px;
+  padding:18px
+}
+
+.card h2{
+  font-size:18px;
+  margin:0 0 14px
+}
+
+.post{
+  padding:14px 0;
+  border-top:1px solid var(--line)
+}
+
+.post:first-of-type{
+  border-top:0
+}
+
+.post h3{
+  margin:0 0 6px;
+  font-size:16px
+}
+
+.meta{
+  font-size:13px;
+  color:var(--muted)
+}
+
+.tag{
+  display:inline-block;
+  background:#202c38;
+  border-radius:999px;
+  padding:4px 8px;
+  font-size:12px;
+  color:#c9d3db;
+  margin:5px 4px 0 0
+}
+
+.room{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:center;
+  padding:12px 0;
+  border-top:1px solid var(--line)
+}
+
+.room:first-of-type{
+  border-top:0
+}
+
+.online{
+  color:#78d39b;
+  font-size:13px
+}
+
+.stats{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
+  margin-top:16px
+}
+
+.stat{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:14px
+}
+
+.stat b{
+  display:block;
+  font-size:22px
+}
+
+.section{display:none}
+
+.section.active{display:block}
+
+.empty{
+  text-align:center;
+  padding:50px 15px;
+  color:var(--muted)
+}
+
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.7);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:30
+}
+
+.modal.show{display:flex}
+
+.modalbox{
+  width:min(560px,100%);
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:18px;
+  padding:20px
+}
+
+.modalbox input,
+.modalbox textarea{
+  width:100%;
+  margin:8px 0 12px;
+  padding:12px;
+  background:#0d141c;
+  border:1px solid var(--line);
+  border-radius:10px;
+  color:#fff
+}
+
+.modalbox textarea{
+  min-height:120px;
+  resize:vertical
+}
+
+.close{
+  float:right;
+  background:transparent;
+  border:0;
+  color:var(--muted);
+  font-size:24px;
+  cursor:pointer
+}
+
+@media(max-width:760px){
+  .grid{
+    grid-template-columns:1fr
+  }
+
+  .nav{
+    padding:10px 12px
+  }
+
+  .logo{
+    font-size:14px
+  }
+
+  .user{
+    display:none
+  }
+
+  .hero{
+    padding:23px
+  }
+
+  .stats{
+    grid-template-columns:1fr 1fr
+  }
+
+  .stats .stat:last-child{
+    grid-column:1/-1
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="nav">
+
+<div class="logo">
+進撃<span>コミュニティ</span>
+</div>
+
+<div class="navlinks">
+<button class="active" data-page="home">ホーム</button>
+<button data-page="board">掲示板</button>
+<button data-page="video">動画</button>
+<button data-page="members">メンバー</button>
+<button data-page="rooms">通話ルーム</button>
+<button data-page="guide">攻略情報</button>
+</div>
+
+<button class="user" id="profileBtn">👤 ゲスト</button>
+
+</div>
+</header>
+
+<main>
+
+<section id="home" class="section active">
+
+<div class="hero">
+
+<div class="eyebrow">
+ATTACK ON COMMUNITY
+</div>
+
+<h1>
+攻略を教え合おう。<br>
+一緒に遊ぼう。
+</h1>
+
+<p>
+進撃の巨人ゲームをみんなで楽しむためのコミュニティ。
+質問、攻略、動画、メンバー募集までここで。
+</p>
+
+<div class="actions">
+
+<button class="primary" id="postBtn">
+＋ 質問・投稿する
+</button>
+
+<button class="secondary" onclick="showPage('rooms')">
+🎧 一緒に遊ぶ人を探す
+</button>
+
+</div>
+</div>
+
+<div class="stats">
+
+<div class="stat">
+<span class="meta">今日の投稿</span>
+<b>128</b>
+</div>
+
+<div class="stat">
+<span class="meta">オンライン</span>
+<b>36</b>
+</div>
+
+<div class="stat">
+<span class="meta">攻略記事</span>
+<b>214</b>
+</div>
+
+</div>
+
+<div class="grid">
+
+<div class="card">
+<h2>🔥 最近の質問</h2>
+<div id="homePosts"></div>
+</div>
+
+<div class="card">
+<h2>🎧 募集中の部屋</h2>
+<div id="homeRooms"></div>
+</div>
+
+</div>
+
+</section>
+
+<section id="board" class="section">
+
+<div class="card">
+<h2>🎮 攻略・質問掲示板</h2>
+<div id="boardPosts"></div>
+</div>
+
+</section>
+
+<section id="video" class="section">
+
+<div class="card">
+
+<h2>🎥 動画</h2>
+
+<div class="empty">
+
+動画投稿エリア
+
+<br>
+
+<button
+class="primary"
+style="margin-top:12px"
+onclick="openModal('動画を投稿')">
+
+動画を投稿する
+
+</button>
+
+</div>
+
+</div>
+
+</section>
+
+<section id="members" class="section">
+
+<div class="card">
+
+<h2>👥 メンバー</h2>
+
+<div id="membersList"></div>
+
+</div>
+
+</section>
+
+<section id="rooms" class="section">
+
+<div class="card">
+
+<h2>🎧 通話・ゲーム部屋</h2>
+
+<p class="meta">
+ゲームに参加する人を探せます。
+</p>
+
+<div id="roomsList"></div>
+
+<button
+class="primary"
+onclick="openModal('新しい部屋を作る')">
+
+＋ 部屋を作る
+
+</button>
+
+</div>
+
+</section>
+
+<section id="guide" class="section">
+
+<div class="card">
+
+<h2>📚 攻略情報</h2>
+
+<div class="post">
+
+<h3>立体機動の基本</h3>
+
+<p class="meta">
+移動・アンカー・攻撃の基本をまとめています。
+</p>
+
+<span class="tag">初心者</span>
+<span class="tag">操作</span>
+
+</div>
+
+<div class="post">
+
+<h3>巨人討伐のコツ</h3>
+
+<p class="meta">
+部位を狙う順番や仲間との連携について。
+</p>
+
+<span class="tag">攻略</span>
+<span class="tag">協力プレイ</span>
+
+</div>
+
+</div>
+
+</section>
+
+</main>
+
+<div class="modal" id="modal">
+
+<div class="modalbox">
+
+<button class="close" onclick="closeModal()">×</button>
+
+<h2 id="modalTitle">
+投稿する
+</h2>
+
+<label>タイトル</label>
+
+<input
+id="titleInput"
+placeholder="例：このステージがクリアできません！">
+
+<label>内容</label>
+
+<textarea
+id="bodyInput"
+placeholder="質問や攻略情報を書いてください">
+</textarea>
+
+<button
+class="primary"
+onclick="submitPost()">
+
+投稿する
+
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+const posts=[
+
+{
+title:"このステージどうやってクリアする？",
+user:"エレン好き",
+time:"10分前",
+tags:["質問","初心者"]
+},
+
+{
+title:"立体機動で高得点を取るコツ",
+user:"リヴァイ兵長推し",
+time:"32分前",
+tags:["攻略","操作"]
+},
+
+{
+title:"今夜一緒に協力プレイできる人いますか？",
+user:"ミカサ",
+time:"1時間前",
+tags:["募集","協力"]
+},
+
+{
+title:"おすすめの装備構成を教えて！",
+user:"調査兵団",
+time:"2時間前",
+tags:["質問","装備"]
+}
+
+];
+
+const rooms=[
+
+{
+name:"今から協力プレイ！",
+host:"ハンジ",
+count:"3/4",
+status:"募集中"
+},
+
+{
+name:"初心者歓迎部屋",
+host:"アルミン",
+count:"2/6",
+status:"募集中"
+},
+
+{
+name:"攻略相談・雑談",
+host:"サシャ",
+count:"5/10",
+status:"オンライン"
+}
+
+];
+
+const members=[
+"エレン好き",
+"リヴァイ兵長推し",
+"ミカサ",
+"ハンジ",
+"アルミン",
+"サシャ",
+"調査兵団"
+];
+
+function postHTML(p){
+
+return `
+<div class="post">
+
+<h3>${p.title}</h3>
+
+<div class="meta">
+👤 ${p.user} ・ ${p.time}
+</div>
+
+${p.tags.map(t =>
+`<span class="tag">${t}</span>`
+).join("")}
+
+</div>
+`;
+
+}
+
+function roomHTML(r){
+
+return `
+<div class="room">
+
+<div>
+
+<b>${r.name}</b>
+
+<div class="meta">
+👤 ${r.host}　${r.count}
+</div>
+
+</div>
+
+<span class="online">
+● ${r.status}
+</span>
+
+</div>
+`;
+
+}
+
+document.getElementById("homePosts").innerHTML =
+posts.slice(0,3).map(postHTML).join("");
+
+document.getElementById("boardPosts").innerHTML =
+posts.map(postHTML).join("");
+
+document.getElementById("homeRooms").innerHTML =
+rooms.slice(0,3).map(roomHTML).join("");
+
+document.getElementById("roomsList").innerHTML =
+rooms.map(roomHTML).join("");
+
+document.getElementById("membersList").innerHTML =
+members.map((m,i)=>`
+
+<div class="room">
+
+<div>
+🧑‍🚀 <b>${m}</b>
+
+<div class="meta">
+${i%2 ? "攻略好き" : "オンライン"}
+</div>
+
+</div>
+
+<button
+class="secondary"
+onclick="alert('フレンド申請を送りました！')">
+
+フレンド
+
+</button>
+
+</div>
+
+`).join("");
+
+function showPage(id){
+
+document
+.querySelectorAll(".section")
+.forEach(x=>x.classList.remove("active"));
+
+document
+.getElementById(id)
+.classList.add("active");
+
+document
+.querySelectorAll(".navlinks button")
+.forEach(x =>
+x.classList.toggle(
+"active",
+x.dataset.page===id
+)
+);
+
+scrollTo({
+top:0,
+behavior:"smooth"
+});
+
+}
+
+document
+.querySelectorAll(".navlinks button")
+.forEach(
+b=>b.onclick=()=>showPage(b.dataset.page)
+);
+
+function openModal(title){
+
+document.getElementById("modalTitle").textContent=title;
+
+document
+.getElementById("modal")
+.classList.add("show");
+
+}
+
+function closeModal(){
+
+document
+.getElementById("modal")
+.classList.remove("show");
+
+}
+
+document.getElementById("postBtn").onclick =
+()=>openModal("質問・投稿する");
+
+document.getElementById("profileBtn").onclick =
+()=>alert("プロフィール機能は次の実装で追加できます。");
+
+function submitPost(){
+
+const t =
+document.getElementById("titleInput")
+.value
+.trim();
+
+const b =
+document.getElementById("bodyInput")
+.value
+.trim();
+
+if(!t){
+
+alert("タイトルを入力してください");
+
+return;
+
+}
+
+posts.unshift({
+
+title:t,
+user:"あなた",
+time:"たった今",
+tags:["新着"]
+
+});
+
+document.getElementById("homePosts").innerHTML =
+posts.slice(0,3).map(postHTML).join("");
+
+document.getElementById("boardPosts").innerHTML =
+posts.map(postHTML).join("");
+
+closeModal();
+
+document.getElementById("titleInput").value="";
+
+document.getElementById("bodyInput").value="";
+
+showPage("board");
+
+}
+
+document
+.getElementById("modal")
+.addEventListener("click",e=>{
+
+if(e.target.id==="modal")
+closeModal();
+
+});
+
+</script>
+
+</body>
+</html>
